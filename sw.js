@@ -17,7 +17,7 @@
  * Your workout data is NOT in here — it's in IndexedDB and is never touched
  * by updates.
  */
-const VERSION = 'v6';
+const VERSION = 'v7';
 const CACHE = `setline-${VERSION}`;
 
 // Every file the app needs. If you add a file, add it here too.
@@ -34,6 +34,7 @@ const APP_FILES = [
   'js/seed.js',
   'js/sets.js',
   'js/stats.js',
+  'js/theme.js',
   'js/store.js',
   'js/ui.js',
   'js/units.js',

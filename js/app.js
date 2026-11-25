@@ -10,6 +10,7 @@ import { loadSettings, getActiveWorkout } from './store.js';
 import { h, icon } from './ui.js';
 import { formatClock } from './workout.js';
 import { seedIfNeeded, applyPlanUpdates } from './seed.js';
+import { loadTheme } from './theme.js';
 import * as home from './views/home.js';
 import * as routines from './views/routines.js';
 import * as exercises from './views/exercises.js';
@@ -127,6 +128,7 @@ async function init() {
   await seedIfNeeded();     // first launch on this device: load the starting plan
   await applyPlanUpdates(); // plan changed since this device was set up: apply once
   await loadSettings();
+  await loadTheme();        // accent colour + background from Settings
   window.addEventListener('hashchange', route);
   await route();
   registerServiceWorker();

@@ -25,6 +25,14 @@
   <meta name="apple-mobile-web-app-title" content="Setline">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
+  <!-- Apply your saved colour theme before anything draws (see js/theme.js). -->
+  <script>
+    try {
+      var t = JSON.parse(localStorage.getItem('setline-theme') || '{}');
+      if (t.accent && t.accent !== 'lime') document.documentElement.dataset.accent = t.accent;
+      if (t.bg && t.bg !== 'dark') document.documentElement.dataset.bg = t.bg;
+    } catch (e) {}
+  </script>
   <link rel="stylesheet" href="css/app.css">
   <!-- type="module" lets us use import/export between JS files. -->
   <script type="module" src="js/app.js"></script>

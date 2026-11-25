@@ -1,12 +1,33 @@
 /**
  * views/settings.js — global preferences, backup & restore, storage info.
  */
-import { h, mount, pageHead, segmented, toast } from '../ui.js';
+import { h, mount, icon, pageHead, segmented, toast } from '../ui.js';
 import { state, setUnit, getSetting } from '../store.js';
 import { exportBackup, importBackup, REMIND_AFTER_DAYS } from '../backup.js';
 import { fmtDate } from '../format.js';
+import { ACCENTS, BACKGROUNDS, getTheme, setTheme, loadTheme } from '../theme.js';
+
+/** Accent colour swatches + background choices. Changes apply instantly. */
+function appearanceCard(theme, onChange) {
+  const label = h('p', { class: 'swatch-label' }, ACCENTS.find((a) => a.id === theme.accent)?.label);
+  const swatches = h('div', { class: 'swatches', role: 'radiogroup', 'aria-label': 'Accent colour' },
+    ACCENTS.map((a) => h('button', {
+      type: 'button', role: 'radio', 'aria-checked': String(a.id === theme.accent), 'aria-label': a.label,
+      class: `swatch${a.id === theme.accent ? ' on' : ''}`,
+      style: `--sw:${a.color};--sw-ink:${a.ink}`,
+      onclick: () => onChange({ accent: a.id }),
+    }, icon('check'))));
+  const backgrounds = h('div', { class: 'bg-options', role: 'radiogroup', 'aria-label': 'Background' },
+    BACKGROUNDS.map((b) => h('button', {
+      type: 'button', role: 'radio', 'aria-checked': String(b.id === theme.bg),
+      class: `bg-option${b.id === theme.bg ? ' on' : ''}`,
+      onclick: () => onChange({ bg: b.id }),
+    }, h('i', { style: `--prev:${b.color}` }), b.label)));
+  return h('section', { class: 'card pad' }, swatches, label, backgrounds);
+}
 
 export async function render(root) {
+  const theme = await getTheme();
   const lastExport = await getSetting('lastExport', null);
   const daysAgo = lastExport ? Math.floor((Date.now() - lastExport) / 86400000) : null;
   const persisted = await navigator.storage?.persisted?.().catch(() => false);
@@ -18,6 +39,9 @@ export async function render(root) {
 
   mount(root,
     pageHead('Settings'),
+
+    h('h2', { class: 'section-title' }, 'Appearance'),
+    appearanceCard(theme, async (patch) => { await setTheme(patch); render(root); }),
 
     h('h2', { class: 'section-title' }, 'Units'),
     h('section', { class: 'card pad' },
@@ -35,7 +59,7 @@ export async function render(root) {
         `You’ll get a reminder after ${REMIND_AFTER_DAYS} days.`),
       h('div', { class: 'backup-actions' },
         h('button', { class: 'btn btn-primary', onclick: async () => { if (await exportBackup()) render(root); } }, 'Export backup'),
-        h('button', { class: 'btn', onclick: async () => { if (await importBackup()) location.hash = '#/home'; } }, 'Import…'))),
+        h('button', { class: 'btn', onclick: async () => { if (await importBackup()) { await loadTheme(); location.hash = '#/home'; } } }, 'Import…'))),
 
     h('h2', { class: 'section-title' }, 'This device'),
     h('section', { class: 'card list' },

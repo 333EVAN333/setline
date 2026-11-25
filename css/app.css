@@ -17,7 +17,7 @@
 
   --accent: #c6f24e;          /* Setline lime */
   --accent-ink: #11150a;      /* text on top of the accent */
-  --accent-soft: rgba(198, 242, 78, 0.11);
+  --accent-soft: color-mix(in srgb, var(--accent) 11%, transparent); /* tints follow the accent */
 
   --warmup: #f6c344;
   --failure: #ff6363;
@@ -58,7 +58,7 @@ ul.plain { list-style: none; margin: 0; padding: 0; }
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
   display: flex; justify-content: center;
   padding-bottom: var(--safe-bottom);
-  background: rgba(13, 14, 16, 0.9);
+  background: color-mix(in srgb, var(--bg) 90%, transparent);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border-top: 1px solid var(--line);
@@ -120,7 +120,7 @@ svg.i { width: 20px; height: 20px; flex: none; }
 .icon-btn.small svg.i { width: 16px; height: 16px; }
 
 /* ---------- Today screen ---------- */
-.today { padding: 20px; background: linear-gradient(155deg, #1c2310 0%, var(--surface) 60%); border-color: #2f3b15; }
+.today { padding: 20px; background: linear-gradient(155deg, color-mix(in srgb, var(--accent) 9%, var(--surface)) 0%, var(--surface) 60%); border-color: color-mix(in srgb, var(--accent) 22%, var(--line)); }
 .today.rest { background: var(--surface); border-color: var(--line); }
 .today h2 { margin: 0 0 2px; font-size: 28px; letter-spacing: -0.02em; line-height: 1.15; }
 .today .muted { margin: 0 0 20px; }
@@ -304,7 +304,7 @@ body.in-workout .view { padding-bottom: calc(var(--safe-bottom) + 40px); }
 /* A completed row gets a lime tint, like a ticked-off line on paper. */
 .set-row.done { background: var(--accent-soft); }
 .set-row.done .cell-input { background: transparent; }
-.ex-card.complete { border-color: #3a4a18; }
+.ex-card.complete { border-color: color-mix(in srgb, var(--accent) 30%, var(--line)); }
 .ex-card { overflow: hidden; }
 
 /* "Workout in progress" bar shown above the tabs on other screens */
@@ -464,3 +464,33 @@ input[type="datetime-local"].input { color-scheme: dark; padding-right: 8px; min
 .day-workout-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .day-workout-main b { font-size: 16px; }
 .day-workout-main span { color: var(--muted); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ---------- themes (Settings → Appearance) ----------
+   js/theme.js sets data-accent / data-bg on <html>. Each theme only swaps the
+   variables at the top of this file; every component already uses them. */
+:root[data-accent="mint"]   { --accent: #3ee0a1; --accent-ink: #032116; }
+:root[data-accent="sky"]    { --accent: #5cb8ff; --accent-ink: #04182b; }
+:root[data-accent="orange"] { --accent: #ff8f4d; --accent-ink: #2a1204; }
+:root[data-accent="pink"]   { --accent: #ff6fb5; --accent-ink: #2b0717; }
+:root[data-accent="mono"]   { --accent: #e9eaec; --accent-ink: #111214; }
+
+:root[data-bg="black"] { --bg: #000000; --surface: #0e0e10; --surface-2: #17171a; --surface-3: #222226; --line: #232327; }
+:root[data-bg="slate"] { --bg: #11151c; --surface: #191e27; --surface-2: #212733; --surface-3: #2b3240; --line: #2c3341; }
+
+/* theme pickers */
+.swatches { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+.swatch {
+  aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center;
+  background: var(--sw); color: var(--sw-ink); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+.swatch svg.i { width: 18px; height: 18px; opacity: 0; }
+.swatch.on { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--text); }
+.swatch.on svg.i { opacity: 1; }
+.swatch-label { margin: 8px 0 0; text-align: center; color: var(--muted); font-size: 13px; font-weight: 650; }
+.bg-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; }
+.bg-option {
+  display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 6px;
+  border-radius: 12px; border: 1px solid var(--line); font-size: 13px; font-weight: 700; color: var(--muted);
+}
+.bg-option i { width: 100%; height: 28px; border-radius: 8px; background: var(--prev); border: 1px solid rgba(255, 255, 255, 0.1); }
+.bg-option.on { border-color: var(--accent); color: var(--text); }
