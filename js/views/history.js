@@ -2,11 +2,11 @@
  * views/history.js — the History tab (#/history) and one workout's details (#/history/:id).
  */
 import { h, mount, icon, pageHead, chooseAction, confirmAction } from '../ui.js';
-import { state, listWorkouts, getWorkout, deleteWorkout, listBodyweight, exerciseMap } from '../store.js';
+import { DAYS, state, listWorkouts, getWorkout, deleteWorkout, listBodyweight, exerciseMap } from '../store.js';
 import { summarizeWorkout } from '../stats.js';
 import { setLabels, formatDuration } from '../sets.js';
 import { unitFor, formatWeight } from '../units.js';
-import { formatVolume, formatDurationShort, fmtDay, fmtTime, fmtDate, fmtShort, isoToMs } from '../format.js';
+import { formatVolume, formatDurationShort, fmtDay, fmtTime, fmtDate, fmtShort, isoToMs, localISO } from '../format.js';
 
 /* ======================= list ======================= */
 
@@ -33,6 +33,26 @@ export async function renderList(root) {
         delta != null && delta !== 0 && ` · ${delta > 0 ? '+' : '−'}${formatWeight(Math.abs(delta), state.unit)} since last`)),
     h('span', { class: 'btn btn-small' }, latest ? 'Open' : 'Log'));
 
+  /* calendar card: this month's count + this week's days (lime = trained) */
+  const now = new Date();
+  const trainedDays = new Set(workouts.map((w) => localISO(new Date(w.startedAt))));
+  const monthCount = workouts.filter((w) => {
+    const d = new Date(w.startedAt);
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  }).length;
+  const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7));
+  const weekDots = DAYS.map((day, i) => {
+    const date = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i);
+    const iso = localISO(date);
+    return h('span', { class: `week-dot${trainedDays.has(iso) ? ' on' : ''}${iso === localISO(now) ? ' is-today' : ''}` }, day.short[0]);
+  });
+  const calCard = h('a', { class: 'card bw-card cal-card', href: '#/calendar' },
+    h('div', {},
+      h('p', { class: 'eyebrow' }, 'Calendar'),
+      h('div', { class: 'cal-card-count' }, `${monthCount} ${monthCount === 1 ? 'workout' : 'workouts'}`, h('small', {}, ' this month')),
+      h('div', { class: 'week-dots', 'aria-label': 'This week' }, weekDots)),
+    h('span', { class: 'btn btn-small' }, 'Open'));
+
   /* workout cards grouped by month */
   const groups = new Map();
   for (const w of workouts) {
@@ -56,7 +76,7 @@ export async function renderList(root) {
 
   mount(root,
     pageHead('History', null, workouts.length ? `${workouts.length} workouts logged` : null),
-    bwCard,
+    h('div', { class: 'stack' }, calCard, bwCard),
     workouts.length > 0 && h('p', { class: 'week-summary' },
       `Last 7 days: `, h('b', {}, `${recent.length} ${recent.length === 1 ? 'workout' : 'workouts'}`),
       recent.length > 0 && [' · ', h('b', {}, formatVolume(recentVolume, state.unit))]),

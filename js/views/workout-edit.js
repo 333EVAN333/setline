@@ -1,5 +1,6 @@
 /**
- * views/workout-edit.js — edit a finished workout (#/history/:id/edit).
+ * views/workout-edit.js — edit a finished workout (#/history/:id/edit),
+ * or add one after the fact (#/history/new/edit, opened from the calendar).
  *
  * Unlike the routine editor (which autosaves), this works on a COPY of the
  * workout and only writes it back when you tap Save. History is your record,
@@ -24,9 +25,25 @@ function toLocalInput(ms) {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 
+/*
+ * Adding a workout: the calendar builds an unsaved draft and hands it over
+ * here. Nothing touches the database until you tap Save, so cancelling
+ * leaves no trace.
+ */
+let pendingNew = null; // { draft, returnTo }
+
+/** Open the editor on a brand-new (unsaved) workout. */
+export function editNewWorkout(draft, returnTo) {
+  pendingNew = { draft, returnTo };
+  location.hash = '#/history/new/edit';
+}
+
 export async function render(root, id) {
-  const [original, exMap] = await Promise.all([getWorkout(id), exerciseMap()]);
+  const isNew = id === 'new';
+  if (isNew && !pendingNew) { location.hash = '#/calendar'; return; } // e.g. page reloaded mid-add
+  const [original, exMap] = await Promise.all([isNew ? pendingNew.draft : getWorkout(id), exerciseMap()]);
   if (!original) { location.hash = '#/history'; return; }
+  const doneHash = isNew ? pendingNew.returnTo : `#/history/${id}`;
 
   // Work on a deep copy; `original` stays untouched until Save.
   const draft = structuredClone(original);
@@ -45,8 +62,10 @@ export async function render(root, id) {
 
   /* ----- leaving ----- */
   async function cancel() {
-    if (dirty && !(await confirmAction({ title: 'Discard changes?', message: 'Your edits to this workout won’t be saved.', okLabel: 'Discard', danger: true }))) return;
-    location.hash = `#/history/${id}`;
+    const message = isNew ? 'This workout won’t be added.' : 'Your edits to this workout won’t be saved.';
+    if (dirty && !(await confirmAction({ title: 'Discard changes?', message, okLabel: 'Discard', danger: true }))) return;
+    if (isNew) pendingNew = null;
+    location.hash = doneHash;
   }
 
   async function save() {
@@ -60,14 +79,16 @@ export async function render(root, id) {
     }
     draft.exercises = draft.exercises.filter((x) => x.sets.length);
     if (!draft.exercises.length) {
-      toast('A workout needs at least one set. Delete it instead.');
+      toast(isNew ? 'Add at least one set with reps first.' : 'A workout needs at least one set. Delete it instead.');
       return;
     }
     draft.finishedAt = draft.startedAt + durationMin * 60000;
     draft.routineName = draft.routineName.trim() || 'Workout';
     await saveWorkout(draft);
-    toast(dropped ? `Saved · ${dropped} empty ${dropped === 1 ? 'set' : 'sets'} removed` : 'Workout updated');
-    location.hash = `#/history/${id}`;
+    const what = isNew ? 'Workout added' : 'Workout updated';
+    toast(dropped ? `${what} · ${dropped} empty ${dropped === 1 ? 'set' : 'sets'} removed` : what);
+    if (isNew) pendingNew = null;
+    location.hash = doneHash;
   }
 
   /* ----- details card: name, start, duration ----- */
@@ -106,7 +127,9 @@ export async function render(root, id) {
 
   /** Redraw the exercise cards after a structural change (add/remove/reorder/type). */
   function drawExercises() {
-    mount(listEl, draft.exercises.map(exerciseCard));
+    mount(listEl, draft.exercises.length
+      ? draft.exercises.map(exerciseCard)
+      : h('div', { class: 'empty card' }, h('p', {}, 'No exercises yet. Add the ones you did below.')));
     updateStats();
   }
   const structural = () => { dirty = true; drawExercises(); };
@@ -210,7 +233,7 @@ export async function render(root, id) {
   mount(root,
     h('header', { class: 'topbar workout-bar' },
       h('button', { class: 'icon-btn', 'aria-label': 'Cancel editing', onclick: cancel }, icon('x')),
-      h('div', { class: 'topbar-title' }, 'Edit workout'),
+      h('div', { class: 'topbar-title' }, isNew ? 'Add workout' : 'Edit workout'),
       h('button', { class: 'btn btn-small btn-primary', onclick: save }, 'Save')),
     details,
     h('div', { class: 'stats two' },
