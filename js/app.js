@@ -18,6 +18,7 @@ import * as workout from './views/workout.js';
 import * as historyView from './views/history.js';
 import * as exerciseDetail from './views/exercise-detail.js';
 import * as bodyweight from './views/bodyweight.js';
+import * as workoutEdit from './views/workout-edit.js';
 
 // [pattern, render function, which tab to highlight]
 const routes = [
@@ -29,6 +30,7 @@ const routes = [
   [/^#\/workout$/, workout.render, 'workout'],
   [/^#\/history$/, historyView.renderList, 'history'],
   [/^#\/history\/([\w-]+)$/, historyView.renderDetail, 'history'],
+  [/^#\/history\/([\w-]+)\/edit$/, workoutEdit.render, 'history'],
   [/^#\/bodyweight$/, bodyweight.render, 'history'],
   [/^#\/exercise\/([\w-]+)$/, exerciseDetail.render, 'exercises'],
 ];

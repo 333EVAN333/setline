@@ -81,7 +81,11 @@ export async function renderDetail(root, id) {
   const s = summarizeWorkout(w);
 
   async function menu() {
-    const choice = await chooseAction(w.routineName, [{ label: 'Delete workout', value: 'delete', danger: true }]);
+    const choice = await chooseAction(w.routineName, [
+      { label: 'Edit workout', value: 'edit' },
+      { label: 'Delete workout', value: 'delete', danger: true },
+    ]);
+    if (choice === 'edit') { location.hash = `#/history/${w.id}/edit`; return; }
     if (choice !== 'delete') return;
     if (await confirmAction({ title: 'Delete this workout?', message: 'It will be removed from history and stats. This can’t be undone.', okLabel: 'Delete', danger: true })) {
       await deleteWorkout(w.id);

@@ -417,3 +417,12 @@ input[type="date"].input { color-scheme: dark; }
 .info-row + .info-row { border-top: 1px solid var(--line); }
 .info-row span { color: var(--muted); }
 .info-row b { text-align: right; font-weight: 650; }
+
+/* ---------- edit a past workout ---------- */
+.edit-details .field:last-child { margin-bottom: 0; }
+.edit-row { display: grid; grid-template-columns: minmax(0, 1fr) 88px; gap: 10px; }
+.edit-row .input { min-width: 0; width: 100%; }
+.edit-row .field { margin-bottom: 0; }
+input[type="datetime-local"].input { color-scheme: dark; padding-right: 8px; min-width: 0; }
+.input.invalid { border-color: var(--danger); }
+.stats.two { grid-template-columns: repeat(2, 1fr); margin-top: 12px; }
