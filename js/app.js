@@ -82,9 +82,17 @@ async function updateResumeBar(tab) {
 function registerServiceWorker() {
   if (!('serviceWorker' in navigator) || location.hostname === 'localhost') return;
 
+  // True only after you tap "Reload" on the update bar. The first time the app
+  // is ever opened, the service worker also takes control of the page; that
+  // must NOT trigger a reload, so we only reload when an update was requested.
+  let updateRequested = false;
+
   navigator.serviceWorker.register('sw.js').then((reg) => {
     // A new version has finished downloading and is waiting -> offer to switch.
-    const offer = (worker) => showUpdateBar(() => worker.postMessage('SKIP_WAITING'));
+    const offer = (worker) => showUpdateBar(() => {
+      updateRequested = true;
+      worker.postMessage('SKIP_WAITING');
+    });
     if (reg.waiting && navigator.serviceWorker.controller) offer(reg.waiting);
     reg.addEventListener('updatefound', () => {
       const worker = reg.installing;
@@ -97,10 +105,9 @@ function registerServiceWorker() {
   }).catch((err) => console.warn('Service worker registration failed', err));
 
   // Once the new version takes over, reload once to run its files.
-  let reloading = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (reloading) return;
-    reloading = true;
+    if (!updateRequested) return;
+    updateRequested = false;
     location.reload();
   });
 }
