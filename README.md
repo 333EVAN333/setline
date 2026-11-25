@@ -86,7 +86,7 @@ Then open <http://localhost:5173>. On Windows you can also double-click `start-s
 
 - The dev server disables caching, and the service worker is skipped on `localhost`, so edits show up on reload.
 - To test offline and install behaviour locally, use <http://127.0.0.1:5173> instead.
-- To regenerate icons, run `python tools/make_icons.py` (requires Pillow).
+- To regenerate icons, run `python tools/make_icons.py`. It renders `icons/source/twemoji-1f4aa.svg` with headless Microsoft Edge.
 
 ## Deploying
 
@@ -100,3 +100,7 @@ Pages redeploys within a minute or two. Installed apps then show a **"New versio
 ## Customising the default plan
 
 The routines, schedule and exercise library created on first launch are defined in [`js/seed.js`](js/seed.js). The seed only runs on a device with no existing data.
+
+## Credits
+
+The app icon uses the 💪 (flexed biceps) emoji from [Twemoji](https://github.com/jdecked/twemoji) by Twitter, Inc. and other contributors, licensed under [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/).

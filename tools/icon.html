@@ -1,0 +1,27 @@
+<!doctype html>
+<!--
+  icon.html — one app icon, drawn full-window so tools/make_icons.py can
+  screenshot it with headless Edge. ?share=0.66 sets the emoji's size as a
+  share of the icon.
+
+  The 💪 artwork (icons/source/twemoji-1f4aa.svg) is Twemoji by Twitter, Inc.
+  and other contributors, licensed CC-BY 4.0.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Icon</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #0d0e10; overflow: hidden; }
+    body { display: grid; place-items: center; }
+    img { width: calc(var(--share) * 100vmin); height: calc(var(--share) * 100vmin); }
+  </style>
+</head>
+<body>
+  <img src="../icons/source/twemoji-1f4aa.svg" alt="">
+  <script>
+    const share = Number(new URLSearchParams(location.search).get('share')) || 0.66;
+    document.body.style.setProperty('--share', share);
+  </script>
+</body>
+</html>

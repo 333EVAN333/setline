@@ -1,8 +1,7 @@
 """
-Generates Setline's app icons into ../icons/ (needs Pillow: pip install pillow).
-
-The motif is three "set rows" like the workout screen: two checked off
-(filled lime box with a tick), one still to do (outlined box).
+Generates Setline's app icons into ../icons/ from the 💪 artwork in
+icons/source/twemoji-1f4aa.svg, by screenshotting tools/icon.html with
+headless Microsoft Edge (installed on every Windows PC).
 
 Run from the project folder:   python tools/make_icons.py
 
@@ -12,67 +11,51 @@ Why several files?
                           "maskable" icon keeps its artwork inside the middle
                           80% so nothing important gets cut off.
   - apple-touch-icon    : iPhone/iPad home-screen icon (180x180).
+  - favicon-32          : browser tab icon.
+
+The 💪 artwork is Twemoji by Twitter, Inc. and other contributors,
+licensed CC-BY 4.0 (https://creativecommons.org/licenses/by/4.0/).
 """
 import pathlib
-from PIL import Image, ImageDraw
+import subprocess
 
-BG = (13, 14, 16)
-LIME = (198, 242, 78)
-LIME_DIM = (198, 242, 78, 90)  # translucent lime for the "line" part of each row
-INK = (17, 21, 10)
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+OUT = ROOT / "icons"
+PAGE = (ROOT / "tools" / "icon.html").as_uri()
+EDGE_PATHS = [
+    r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+    r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
+]
 
-OUT = pathlib.Path(__file__).resolve().parent.parent / "icons"
-S = 1024  # draw big, then shrink for smooth edges
-
-
-def draw_motif(img, scale):
-    """Draw the three rows centred on the canvas. scale=1 fills ~62% of the width."""
-    d = ImageDraw.Draw(img, "RGBA")
-    c = S / 2
-    box = 150 * scale         # check-box size
-    gap = 64 * scale          # vertical gap between rows
-    bar_w = 330 * scale       # length of the line next to each box
-    bar_h = 64 * scale
-    total_w = box + 44 * scale + bar_w
-    left = c - total_w / 2
-    top = c - (3 * box + 2 * gap) / 2
-    radius = 34 * scale
-
-    for i in range(3):
-        y = top + i * (box + gap)
-        bx0, by0, bx1, by1 = left, y, left + box, y + box
-        checked = i < 2
-        if checked:
-            d.rounded_rectangle((bx0, by0, bx1, by1), radius, fill=LIME)
-            # tick mark
-            w = 22 * scale
-            p1 = (bx0 + box * 0.26, by0 + box * 0.52)
-            p2 = (bx0 + box * 0.44, by0 + box * 0.70)
-            p3 = (bx0 + box * 0.76, by0 + box * 0.32)
-            d.line([p1, p2, p3], fill=INK, width=int(w), joint="curve")
-            for p in (p1, p3):  # round the tick's ends
-                d.ellipse((p[0] - w / 2, p[1] - w / 2, p[0] + w / 2, p[1] + w / 2), fill=INK)
-        else:
-            d.rounded_rectangle((bx0, by0, bx1, by1), radius, outline=LIME, width=int(16 * scale))
-        # the "set line" to the right of the box
-        lx0 = bx1 + 44 * scale
-        ly0 = y + (box - bar_h) / 2
-        length = bar_w * (1.0, 0.8, 0.6)[i]
-        d.rounded_rectangle((lx0, ly0, lx0 + length, ly0 + bar_h), bar_h / 2,
-                            fill=LIME if checked else LIME_DIM)
+# file name, size in px, emoji size as a share of the icon
+ICONS = [
+    ("icon-192.png", 192, 0.66),
+    ("icon-512.png", 512, 0.66),
+    ("icon-maskable-512.png", 512, 0.50),
+    ("apple-touch-icon.png", 180, 0.66),
+    ("favicon-32.png", 32, 0.86),
+]
 
 
-def make(size, scale, name):
-    img = Image.new("RGBA", (S, S), BG + (255,))
-    draw_motif(img, scale)
-    img.convert("RGB").resize((size, size), Image.LANCZOS).save(OUT / name, optimize=True)
-    print("wrote", OUT / name)
+def find_edge():
+    for p in EDGE_PATHS:
+        if pathlib.Path(p).exists():
+            return p
+    raise SystemExit("Microsoft Edge not found; install it or edit EDGE_PATHS.")
+
+
+def render(edge, name, size, share):
+    target = OUT / name
+    subprocess.run([
+        edge, "--headless", "--disable-gpu", "--hide-scrollbars",
+        "--force-device-scale-factor=1", "--allow-file-access-from-files",
+        f"--window-size={size},{size}", f"--screenshot={target}",
+        f"{PAGE}?share={share}",
+    ], check=True, capture_output=True, timeout=60)
+    print("wrote", target)
 
 
 if __name__ == "__main__":
-    OUT.mkdir(exist_ok=True)
-    make(192, 1.0, "icon-192.png")
-    make(512, 1.0, "icon-512.png")
-    make(512, 0.78, "icon-maskable-512.png")  # artwork kept inside the safe zone
-    make(180, 1.0, "apple-touch-icon.png")
-    make(32, 1.15, "favicon-32.png")
+    edge = find_edge()
+    for name, size, share in ICONS:
+        render(edge, name, size, share)
