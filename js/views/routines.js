@@ -33,11 +33,13 @@ export async function renderList(root) {
 
   async function menu(r) {
     const choice = await chooseAction(r.name, [
+      { label: 'Edit exercises & sets', value: 'edit' },
       { label: 'Start workout', value: 'start', disabled: !r.exercises.length },
       { label: 'Rename', value: 'rename' },
       { label: 'Delete routine', value: 'delete', danger: true },
     ]);
-    if (choice === 'start') startWorkout(r);
+    if (choice === 'edit') location.hash = `#/routine/${r.id}`; // opens the routine editor
+    else if (choice === 'start') startWorkout(r);
     else if (choice === 'rename') {
       const name = await askText({ title: 'Rename routine', value: r.name });
       if (name) { r.name = name; await saveRoutine(r); renderList(root); }
